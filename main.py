@@ -1,6 +1,7 @@
-import random
+import random 
 import time
 import threading
+from tkinter.font import names
 from flask import Flask, render_template, redirect, url_for, session, request
 from datetime import datetime
 from block import Block
@@ -59,6 +60,10 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
+        if len(username) < 4 or len(password)<4:
+            error = 'Invalid Credentials. Please try again.'
+            return redirect(url_for("login"))
+
         user_list = [x for x in users if x.username == username]
         user = user_list[0]
 
@@ -75,50 +80,77 @@ def login():
             error = 'Invalid Credentials. Please try again.'
 
     return render_template('login.html', error=error)
-
+ 
 
 @app.route('/login_successful', methods=['GET', 'POST'])
 def user_home():
-    global election_chain
-    global names_list
+    global user, election_chain, names_list
     if 'user_id' not in session:
         return redirect(url_for('login'))
     error = None
     nameString=None
-    if Blockchain.status == 0:
-        error = "Voting has not started yet."
+    candidature = None
+    if Blockchain.status == 0 and user.status == 0:
+        if request.method=="POST":
+            if request.form['Candidature'] == "Apply for Candidature":
+                user.status = 1
+                names_list.append(user.username)
+                return redirect(url_for("user_home"))
+        return render_template("profile_before.html")
     else:
+        
+        if user.status==1:
+            candidature = "You've registered as a candidate for these elections."
         nameString = []
         for i in range(len(names_list)):
             nameString.append(str(i+1)+") "+names_list[i])
-    if request.method == "POST":
-        vote = Vote(request.form["vote"])
-        if user.balance != 1:
-            error = "You have already voted in this election."
-        elif vote.check_vote() and verify_transaction(11,2,int(vote.vote)):
-            user.balance -=1
-            encrypt_data(users)
-            election_chain.unconfirmed_votes.append(vote)
-            return render_template("voted.html")
-        else:
-            error = "Invalid Vote String. Please enter a valid vote."
-    return render_template("profile.html", error=error,nameString=nameString)
+        
+        if request.method == "POST":
+            vote = Vote(request.form["vote"])
+            if Blockchain.status == 0:
+                error="The voting has not started yet."
+            elif user.balance != 1:
+                error = "You have already voted in this election."
+            elif vote.check_vote() and verify_transaction(11,2,int(vote.vote)):
+                user.balance -=1
+                encrypt_data(users)
+                election_chain.unconfirmed_votes.append(vote)
+                return render_template("voted.html")
+            else:
+                error = "Invalid Vote String. Please enter a valid vote."
+        return render_template("profile_after.html", error=error,nameString=nameString,candidature=candidature)
 
 
 @app.route("/admin_setup", methods=["GET","POST"])
 def admin_home():
-    global election_chain
-    global names_list
+    global election_chain, names_list
+    for i in users:
+        if i.status == 1 and i.username not in names_list:
+            names_list.append(i.username)
+    print("page reloaded",names_list)
     if 'admin' not in session:
         return redirect(url_for('login'))
-    error = None
+    error,error2 = None,None
+    candidates = None
+    
+    if len(names_list)==0:
+        error2 = "No candidate has applied for candidature yet"
+    else:
+        candidates=names_list
+
     if request.method == "POST":
-        num_candidates = int(request.form['num'])
-        names_list = request.form["names"].split(";")
-        if request.form["start_button"] == "Start Elections":
-            if num_candidates == len(names_list):
+        if request.form["start_button"] == "Remove Candidate":
+            print("\nremove button pressed\n")
+            name = request.form["candidate"]
+            names_list.remove(name)
+            for i in users:
+                if i.username == name:
+                    i.status = 0
+            return redirect(url_for('admin_home'))
+        elif request.form["start_button"] == "Start Elections":
+            if len(names_list)>=2:
                 lock.acquire()
-                Vote.candidates = num_candidates
+                Vote.candidates = len(names_list)
                 Blockchain.status = 1
                 election_chain = Blockchain(names_list)
                 lock.release()
@@ -128,8 +160,11 @@ def admin_home():
                 #print("Lock released")
                 return redirect(url_for("admin_home2"))
             else:
-                error = "Candidates Name count unequal to number of Candidates. Please input names separated by ';'"
-    return render_template("admin_start.html", error=error)
+                error = "Minimum Two candidates needed for elections."
+        elif request.form["start_button"] == "LOGOUT":
+            return redirect(url_for("login"))
+        
+    return render_template("admin_start.html", error=error,error2=error2,candidates=candidates)
 
 
 @app.route("/admin_stop", methods=["GET","POST"])
@@ -155,6 +190,7 @@ def admin_home2():
             #Resetting votes for Anonymity & preparing for next elections.
             for user in users: 
                 user.balance = 1
+                user.status = 0
             encrypt_data(users)
             flag_variable = False #Stopping Further Mining.
             value = "Elections Stopped!"
@@ -209,6 +245,3 @@ if __name__ == "__main__":
     t2.join()
 
     print("\n\nDone!")
-
-
-    
