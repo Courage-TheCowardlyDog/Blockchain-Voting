@@ -1,0 +1,35 @@
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset=""UTF-8">
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
+    <title>Profile</title>
+</head>
+<body>
+    <div class="container">
+        <h1> Admin Login Succesful</h1>
+        <h3>Election Setup</h3>
+        <br><br>
+        {% if error2 %}
+        <p><strong>No candidates has applied for candidature yet.</strong></p>
+        {% endif %}
+        <form action="" method="post">
+        {% if candidates %}
+        <p><strong>Election Candidates:</strong> 
+          <br>
+          {% for name in candidates %}
+            <input type="radio" name="candidate" value="{{ name }}">
+            <label>{{ name }}</label>
+            <br>
+          {% endfor %}
+            <input type="submit" name="start_button" value="Remove Candidate">
+        </p>
+            <input type="submit" name="start_button" value="Start Elections">
+        {% endif %}
+            <input type="submit" name="start_button" value="LOGOUT">
+        </form>
+        {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}
+        {% endif %}
+    </div>
+</body>
+</html>

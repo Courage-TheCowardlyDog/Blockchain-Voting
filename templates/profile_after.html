@@ -1,0 +1,41 @@
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset=""UTF-8">
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
+    <title>Profile</title>
+</head>
+<body>
+    <div class="container">
+        <h1> Login Succesful</h1>
+        <label>Welcome to your Profile</label>
+        <br><br>
+        {% if candidature %}
+        <p><strong> You've registered as a candidate for the elections. </strong> 
+        <br>
+        {% endif %}
+        
+        {% if nameString %}
+        <p><strong>Election Candidates: </strong> 
+          {% for name in nameString %}
+          <p>{{ name }}</p> 
+          {% endfor %}
+        {% endif %}
+        <p><strong>Note: </strong>Your voting string must be of length = Number of candidates</p>
+        <p>For example, if there are three candidates, your vote string must be like: <strong>001 </strong> where the 1 denotes a vote for candidate 3.</p>
+
+        <form action="" method="post">
+          <input type="password" placeholder="Enter Your Voting String" name="vote" value="{{
+            request.form.vote }}">
+          <input type="submit" value="Cast vote">
+        </form>
+
+        <form action="/">
+            <br>
+            <button type="submit">LOGOUT</button>
+        </form>
+        {% if error %}
+        <p class="error"><strong>Error:</strong> {{ error }}  
+        {% endif %}
+    </div>
+</body>
+</html>

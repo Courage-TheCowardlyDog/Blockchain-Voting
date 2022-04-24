@@ -1,0 +1,49 @@
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset=""UTF-8">
+    <link href="static/bootstrap.min.css" rel="stylesheet" media="screen">
+    <title>Profile</title>
+</head>
+<body>
+    <div class="container">
+        <h1> Admin Login Succesful</h1>
+        <label>Elections are Underway!</label>
+        <br><br>
+        <form action="" method="post">
+          <input type="submit" name="button" class="btn btn-danger" value="End Elections">
+          <input type="submit" name="button" class="btn btn-success" value="Show Blockchain">
+          <input type="submit" name="button" class="btn btn-warning" value="Mine Block">
+          <input type="submit" name="button" class="btn btn-info" value="View Users">
+        </form>
+        <form action="/">
+            <br>
+            <button type="submit">LOGOUT</button>
+        </form>
+
+        {% if chain %}
+        <p><strong>Blockchain:</strong> 
+            {% for block in chain %}
+            <p>{{block}}</p>
+            {% endfor %}
+        {% endif %}
+
+        {% if value %}
+        <p><strong>Elections Stopped! No more blocks will be mined</strong>
+        {% endif %}
+
+        {% if userString %}
+        <p><strong>Users:</strong> 
+            {% for user in userString %}
+            <p>{{user}}</p>
+            {% endfor %}
+        {% endif %}
+
+        {% if resultString %}
+        <p><strong>Results:</strong> 
+            {% for result in resultString %}
+            <p>{{result}}</p>
+            {% endfor %}
+        {% endif %}
+    </div>
+</body>
+</html>
