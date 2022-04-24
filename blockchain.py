@@ -92,9 +92,3 @@ class Blockchain(object):
                         summed_votes[i]+=int(vote_list[i])
         
         return summed_votes
-
-
-
-
-
-
