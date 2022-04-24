@@ -8,6 +8,7 @@ class User:
         self.username = username
         self.password = password
         self.balance = 1
+        self.status = 0 #0: Voter, 1: Candidate
 
     def __repr__(self):
         return f'<Username: {self.username}, User ID: {self.id}>'
