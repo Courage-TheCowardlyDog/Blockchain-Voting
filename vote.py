@@ -1,7 +1,7 @@
 from datetime import datetime
 
 class Vote(object):
-    candidates = 3 #set number of candidates
+    candidates = 2 #set number of candidates
     def __init__(self, vote):
         self.vote = vote
         self.timestamp = datetime.now()
