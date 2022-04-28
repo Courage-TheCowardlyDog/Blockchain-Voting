@@ -15,12 +15,12 @@ lock = threading.Lock()
 election_chain = Blockchain([])
 names_list=[]
 
-def verify_transaction(p,g,x):
-    y = pow(g,x,p)
-    r = random.randint(0,p-1)
+def verify_transaction(p,g,y,s,b,r):
+    #y = pow(g,x,p) Sender's Public Value
+    #s = (r+b*x)%(p-1) Calculated by Sender
+    #b = int.from_bytes(random.randbytes(1),"big")
+    #r = random.randint(0,p-1)
     h = pow(g,r,p)
-    b = int.from_bytes(random.randbytes(1),"big")
-    s = (r+b*x)%(p-1)
     if pow(g,s,p) == (h*pow(y,b,p))%p:
         return True
     else: 
@@ -64,18 +64,18 @@ def login():
             error = 'Invalid Credentials. Please try again.'
             return redirect(url_for("login"))
 
-        user_list = [x for x in users if x.username == username]
-        user = user_list[0]
-
-        if  username == 'admin' and password == 'admin':
-            session['admin'] = 'admin'
-            if Blockchain.status == 1:
-                return redirect(url_for('admin_home2'))
-            elif Blockchain.status == 0:
-                return redirect(url_for('admin_home'))
-        elif username == user.username and password == user.password:
-            session['user_id'] = user.id
-            return redirect(url_for('user_home'))
+        for x in users:
+            if x.username == username:
+                user = x
+                if  username == 'admin' and password == 'admin':
+                    session['admin'] = 'admin'
+                    if Blockchain.status == 1:
+                        return redirect(url_for('admin_home2'))
+                    elif Blockchain.status == 0:
+                        return redirect(url_for('admin_home'))
+                elif username == user.username and password == user.password:
+                    session['user_id'] = user.id
+                    return redirect(url_for('user_home'))
         else:
             error = 'Invalid Credentials. Please try again.'
 
@@ -90,7 +90,7 @@ def user_home():
     error = None
     nameString=None
     candidature = None
-    if Blockchain.status == 0 and user.status == 0:
+    if Blockchain.status == 0 and user.status==0:
         if request.method=="POST":
             if request.form['Candidature'] == "Apply for Candidature":
                 user.status = 1
@@ -111,10 +111,17 @@ def user_home():
                 error="The voting has not started yet."
             elif user.balance != 1:
                 error = "You have already voted in this election."
-            elif vote.check_vote() and verify_transaction(11,2,int(vote.vote)):
-                user.balance -=1
-                encrypt_data(users)
-                election_chain.unconfirmed_votes.append(vote)
+            elif vote.check_vote():
+                p,g,b=11,2,int.from_bytes(random.randbytes(1),"big")
+                y = pow(g,int(vote.vote),p) #Sender's Public Value
+                r = random.randint(0,p-1)
+                s = (r+b*int(vote.vote))%(p-1) #Calculated by Sender
+                if verify_transaction(p,g,y,s,b,r):
+                    user.balance -=1
+                    encrypt_data(users)
+                    election_chain.unconfirmed_votes.append(vote)
+                else:
+                    print("Error, invalid transaction")
                 return render_template("voted.html")
             else:
                 error = "Invalid Vote String. Please enter a valid vote."
@@ -127,7 +134,6 @@ def admin_home():
     for i in users:
         if i.status == 1 and i.username not in names_list:
             names_list.append(i.username)
-    print("page reloaded",names_list)
     if 'admin' not in session:
         return redirect(url_for('login'))
     error,error2 = None,None
@@ -140,7 +146,6 @@ def admin_home():
 
     if request.method == "POST":
         if request.form["start_button"] == "Remove Candidate":
-            print("\nremove button pressed\n")
             name = request.form["candidate"]
             names_list.remove(name)
             for i in users:
@@ -245,3 +250,6 @@ if __name__ == "__main__":
     t2.join()
 
     print("\n\nDone!")
+
+
+    
